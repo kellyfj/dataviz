@@ -20,19 +20,25 @@ public class TimeSeries {
   private long id;
 
   @NotNull
-  private String username;
+  public String username;
 
   @NotNull
   @Temporal(TemporalType.TIMESTAMP)
-  private Date dateTime;
+  public Date dateTime;
 
-  private Double gsr;
+  public Double gsr;
 
 
   public TimeSeries(String username, java.util.Date utilDate, Double gsr) {
     this.username = username;
     this.dateTime = utilDate;
     this.gsr = gsr;
+  }
 
+
+  public TimeSeries() {
+    this.username="Default";
+    this.dateTime= new Date();
+    this.gsr = 0.0;
   }
 }

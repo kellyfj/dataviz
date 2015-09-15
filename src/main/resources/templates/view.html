@@ -1,0 +1,14 @@
+<html>
+<body>
+<table>
+    <th:block th:each="ts : ${timeseries}">
+    <tr>
+        <td th:text="${ts.username}">...</td>
+        <td th:text="${ts.dateTime}">...</td>
+        <td th:text="${ts.gsr}">...</td>
+    </tr>
+  </th:block>
+</table>
+</body>
+</html>
+
