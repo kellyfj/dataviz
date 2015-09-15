@@ -39,11 +39,12 @@ public class DataUploadController {
   public
   @ResponseBody
   String handleFileUpload(
-      @RequestParam("name") String name,
       @RequestParam("file") MultipartFile file
   ) {
     if (!file.isEmpty()) {
       try {
+
+        //Write data to temporary file for ingestion to Commons CSV
         byte[] bytes = file.getBytes();
         File downloadFile = new File(System.currentTimeMillis()+".txt");
         BufferedOutputStream stream =
@@ -51,10 +52,9 @@ public class DataUploadController {
         stream.write(bytes);
         stream.close();
 
-
+        //Ingest and parse
         Reader in = new FileReader(downloadFile);
         Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(in);
-
         int recordCount = 0;
 
         for (CSVRecord record : records) {
@@ -69,24 +69,22 @@ public class DataUploadController {
             gsr = Double.parseDouble(rawGsr);
           }
           if (recordCount % 10 == 0) {
-            System.out.println(rawDate + "-> (" + d + ") -> (" + gsr + ")");
+            System.out.println(recordCount +" records loaded");
           }
           TimeSeries t = new TimeSeries("kellyfj", d, gsr);
           timeSeriesDao.save(t);
 
           recordCount++;
-
         }
         System.out.println("Record count " + recordCount);
 
-
-        return "You successfully uploaded " + name + "!";
+        return "You successfully uploaded the file!";
       } catch (Exception e) {
         e.printStackTrace();
-        return "You failed to upload " + name + " => " + e.getMessage();
+        return "You failed to upload => " + e.getMessage();
       }
     } else {
-      return "You failed to upload " + name + " because the file was empty.";
+      return "You failed to upload because the file was empty.";
     }
   }
 
