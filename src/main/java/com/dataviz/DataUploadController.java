@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import com.dataviz.dao.TimeSeries;
+import com.dataviz.dao.TimeSeriesDao;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,50 +24,66 @@ import org.apache.commons.csv.*;
 @Controller
 public class DataUploadController {
 
-    @RequestMapping(value="/upload", method=RequestMethod.GET)
-    public @ResponseBody String provideUploadInfo() {
-        return "You can upload a file by posting to this same URL.";
-    }
+  @RequestMapping(value = "/upload", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  String provideUploadInfo() {
+    return "You can upload a file by posting to this same URL.";
+  }
 
-    @RequestMapping(value="/upload", method=RequestMethod.POST)
-    public @ResponseBody String handleFileUpload(@RequestParam("name") String name,
-            @RequestParam("file") MultipartFile file){
-        if (!file.isEmpty()) {
-            try {
-                byte[] bytes = file.getBytes();
-                File downloadFile = new File(name);
-                BufferedOutputStream stream =
-                        new BufferedOutputStream(new FileOutputStream(downloadFile));
-                stream.write(bytes);
-                stream.close();
-
-
-                Reader in = new FileReader(downloadFile);
-                Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(in);
-
-                int recordCount =0;
-                for (CSVRecord record : records) {
-                    // date	calories	gsr	heart-rate	skin-temp	steps
-                    String date = record.get("date");
-                    //2015-05-12 15:23Z
-                    DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mmX", Locale.ENGLISH);
-                    Date d = format.parse(date);
-                    String gsr = record.get("gsr");
-                    if(recordCount % 10 == 0) {
-                      System.out.println(date + "-> ("+d+") -> ("+gsr+")");
-                    }
-                    recordCount++;
-                }
-                System.out.println("Record count "+recordCount);
+  @RequestMapping(value = "/upload", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String handleFileUpload(
+      @RequestParam("name") String name,
+      @RequestParam("file") MultipartFile file
+  ) {
+    if (!file.isEmpty()) {
+      try {
+        byte[] bytes = file.getBytes();
+        File downloadFile = new File(System.currentTimeMillis()+".txt");
+        BufferedOutputStream stream =
+            new BufferedOutputStream(new FileOutputStream(downloadFile));
+        stream.write(bytes);
+        stream.close();
 
 
-                return "You successfully uploaded " + name + "!";
-            } catch (Exception e) {
-                return "You failed to upload " + name + " => " + e.getMessage();
-            }
-        } else {
-            return "You failed to upload " + name + " because the file was empty.";
+        Reader in = new FileReader(downloadFile);
+        Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(in);
+
+        int recordCount = 0;
+        TimeSeriesDao dao = new TimeSeriesDao();
+        for (CSVRecord record : records) {
+          // date	calories	gsr	heart-rate	skin-temp	steps
+          String rawDate = record.get("date");
+          //2015-05-12 15:23Z
+          DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mmX", Locale.ENGLISH);
+          Date d = format.parse(rawDate);
+          String rawGsr = record.get("gsr");
+          Double gsr = null;
+          if (rawGsr != null && !rawGsr.isEmpty() ) {
+            gsr = Double.parseDouble(rawGsr);
+          }
+          if (recordCount % 10 == 0) {
+            System.out.println(rawDate + "-> (" + d + ") -> (" + gsr + ")");
+          }
+          //TimeSeries t = new TimeSeries("kellyfj", d, gsr);
+          //dao.create(t);
+
+          recordCount++;
+
         }
+        System.out.println("Record count " + recordCount);
+
+
+        return "You successfully uploaded " + name + "!";
+      } catch (Exception e) {
+        e.printStackTrace();
+        return "You failed to upload " + name + " => " + e.getMessage();
+      }
+    } else {
+      return "You failed to upload " + name + " because the file was empty.";
     }
+  }
 
 }
