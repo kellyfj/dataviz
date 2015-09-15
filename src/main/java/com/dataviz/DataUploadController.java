@@ -11,7 +11,8 @@ import java.util.Date;
 import java.util.Locale;
 
 import com.dataviz.dao.TimeSeries;
-import com.dataviz.dao.TimeSeriesDao;
+import com.dataviz.dao.TimeSeriesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,6 +24,9 @@ import org.apache.commons.csv.*;
 
 @Controller
 public class DataUploadController {
+
+  @Autowired
+  TimeSeriesRepository timeSeriesDao;
 
   @RequestMapping(value = "/upload", method = RequestMethod.GET)
   public
@@ -52,7 +56,7 @@ public class DataUploadController {
         Iterable<CSVRecord> records = CSVFormat.EXCEL.withHeader().parse(in);
 
         int recordCount = 0;
-        TimeSeriesDao dao = new TimeSeriesDao();
+
         for (CSVRecord record : records) {
           // date	calories	gsr	heart-rate	skin-temp	steps
           String rawDate = record.get("date");
@@ -67,8 +71,8 @@ public class DataUploadController {
           if (recordCount % 10 == 0) {
             System.out.println(rawDate + "-> (" + d + ") -> (" + gsr + ")");
           }
-          //TimeSeries t = new TimeSeries("kellyfj", d, gsr);
-          //dao.create(t);
+          TimeSeries t = new TimeSeries("kellyfj", d, gsr);
+          timeSeriesDao.save(t);
 
           recordCount++;
 
